@@ -1,7 +1,6 @@
-import { FC, ReactElement } from 'react';
+import { FC, ReactElement, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
 
-import '../../index.css';
 import styles from './app.module.css';
 
 import {
@@ -18,6 +17,9 @@ import {
 
 import { AppHeader, IngredientDetails, Modal, OrderInfo } from '@components';
 
+import { useDispatch } from '../../services/store';
+import { getIngredients } from '../../services/slices/ingredientsSlice';
+
 type TProtectedRouteProps = {
   children: ReactElement;
   onlyUnAuth?: boolean;
@@ -26,7 +28,12 @@ type TProtectedRouteProps = {
 const ProtectedRoute: FC<TProtectedRouteProps> = ({ children }) => children;
 
 const App = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    dispatch(getIngredients());
+  }, [dispatch]);
 
   const closeModal = () => {
     navigate(-1);
