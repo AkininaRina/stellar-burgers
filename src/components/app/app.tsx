@@ -1,5 +1,5 @@
 import { FC, ReactElement, useEffect } from 'react';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 
 import styles from './app.module.css';
 
@@ -16,16 +16,42 @@ import {
 } from '@pages';
 
 import { AppHeader, IngredientDetails, Modal, OrderInfo } from '@components';
+import { Preloader } from '../ui/preloader';
 
-import { useDispatch } from '../../services/store';
+import { useDispatch, useSelector } from '../../services/store';
 import { getIngredients } from '../../services/slices/ingredientsSlice';
+import {
+  checkUserAuth,
+  getIsAuthChecked,
+  getUser
+} from '../../services/slices/userSlice';
 
 type TProtectedRouteProps = {
   children: ReactElement;
   onlyUnAuth?: boolean;
 };
 
-const ProtectedRoute: FC<TProtectedRouteProps> = ({ children }) => children;
+const ProtectedRoute: FC<TProtectedRouteProps> = ({
+  children,
+  onlyUnAuth = false
+}) => {
+  const user = useSelector(getUser);
+  const isAuthChecked = useSelector(getIsAuthChecked);
+
+  if (!isAuthChecked) {
+    return <Preloader />;
+  }
+
+  if (onlyUnAuth && user) {
+    return <Navigate to='/' replace />;
+  }
+
+  if (!onlyUnAuth && !user) {
+    return <Navigate to='/login' replace />;
+  }
+
+  return children;
+};
 
 const App = () => {
   const dispatch = useDispatch();
@@ -33,6 +59,7 @@ const App = () => {
 
   useEffect(() => {
     dispatch(getIngredients());
+    dispatch(checkUserAuth());
   }, [dispatch]);
 
   const closeModal = () => {
