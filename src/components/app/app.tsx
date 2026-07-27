@@ -1,5 +1,12 @@
 import { FC, ReactElement, useEffect } from 'react';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate
+} from 'react-router-dom';
+import type { Location } from 'react-router-dom';
 
 import styles from './app.module.css';
 
@@ -31,23 +38,32 @@ type TProtectedRouteProps = {
   onlyUnAuth?: boolean;
 };
 
+type TLocationState = {
+  background?: Location;
+  from?: Location;
+};
+
 const ProtectedRoute: FC<TProtectedRouteProps> = ({
   children,
   onlyUnAuth = false
 }) => {
   const user = useSelector(getUser);
   const isAuthChecked = useSelector(getIsAuthChecked);
+  const location = useLocation();
+
+  const locationState = location.state as TLocationState | null;
+  const from = locationState?.from;
 
   if (!isAuthChecked) {
     return <Preloader />;
   }
 
   if (onlyUnAuth && user) {
-    return <Navigate to='/' replace />;
+    return <Navigate to={from || '/'} replace />;
   }
 
   if (!onlyUnAuth && !user) {
-    return <Navigate to='/login' replace />;
+    return <Navigate to='/login' state={{ from: location }} replace />;
   }
 
   return children;
@@ -56,6 +72,10 @@ const ProtectedRoute: FC<TProtectedRouteProps> = ({
 const App = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const locationState = location.state as TLocationState | null;
+  const background = locationState?.background;
 
   useEffect(() => {
     dispatch(getIngredients());
@@ -70,7 +90,8 @@ const App = () => {
     <div className={styles.app}>
       <AppHeader />
 
-      <Routes>
+      {/* Основные страницы */}
+      <Routes location={background || location}>
         <Route path='/' element={<ConstructorPage />} />
 
         <Route path='/feed' element={<Feed />} />
@@ -129,21 +150,23 @@ const App = () => {
           }
         />
 
+        {/* Прямое открытие подробностей на отдельной странице */}
         <Route
-          path='/feed/:number'
+          path='/ingredients/:id'
           element={
-            <Modal title='' onClose={closeModal}>
-              <OrderInfo />
-            </Modal>
+            <main className={styles.ingredientPage}>
+              <h1 className='text text_type_main-large'>Детали ингредиента</h1>
+              <IngredientDetails />
+            </main>
           }
         />
 
         <Route
-          path='/ingredients/:id'
+          path='/feed/:number'
           element={
-            <Modal title='Детали ингредиента' onClose={closeModal}>
-              <IngredientDetails />
-            </Modal>
+            <main className={styles.orderPage}>
+              <OrderInfo />
+            </main>
           }
         />
 
@@ -151,15 +174,49 @@ const App = () => {
           path='/profile/orders/:number'
           element={
             <ProtectedRoute>
-              <Modal title='' onClose={closeModal}>
+              <main className={styles.orderPage}>
                 <OrderInfo />
-              </Modal>
+              </main>
             </ProtectedRoute>
           }
         />
 
         <Route path='*' element={<NotFound404 />} />
       </Routes>
+
+      {/* Модальные окна поверх предыдущей страницы */}
+      {background && (
+        <Routes>
+          <Route
+            path='/ingredients/:id'
+            element={
+              <Modal title='Детали ингредиента' onClose={closeModal}>
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+
+          <Route
+            path='/feed/:number'
+            element={
+              <Modal title='' onClose={closeModal}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <ProtectedRoute>
+                <Modal title='' onClose={closeModal}>
+                  <OrderInfo />
+                </Modal>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      )}
     </div>
   );
 };
