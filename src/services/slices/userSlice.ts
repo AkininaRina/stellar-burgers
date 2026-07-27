@@ -4,7 +4,8 @@ import {
   getUserApi,
   loginUserApi,
   logoutApi,
-  registerUserApi
+  registerUserApi,
+  updateUserApi
 } from '../../utils/burger-api';
 
 import { deleteCookie, getCookie, setCookie } from '../../utils/cookie';
@@ -81,6 +82,25 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+export const updateUser = createAsyncThunk(
+  'user/updateUser',
+  async (
+    data: { name: string; email: string; password?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await updateUserApi(data);
+      return response.user;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error
+          ? error.message
+          : 'Ошибка обновления пользователя'
+      );
+    }
+  }
+);
+
 export const logoutUser = createAsyncThunk(
   'user/logoutUser',
   async (_, { rejectWithValue }) => {
@@ -139,6 +159,19 @@ const userSlice = createSlice({
         state.user = action.payload;
       })
       .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(updateUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(updateUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
