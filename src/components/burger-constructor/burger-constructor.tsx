@@ -26,8 +26,6 @@ export const BurgerConstructor: FC = () => {
   };
 
   const onOrderClick = () => {
-    console.log('Кнопка нажата');
-
     if (!user) {
       navigate('/login');
       return;
