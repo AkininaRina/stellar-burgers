@@ -147,10 +147,7 @@ describe('burgerConstructor reducer', () => {
       error: null
     };
 
-    const state = burgerConstructorReducer(
-      initialState,
-      clearOrderModalData()
-    );
+    const state = burgerConstructorReducer(initialState, clearOrderModalData());
 
     expect(state.orderModalData).toBeNull();
   });
@@ -198,11 +195,10 @@ describe('burgerConstructor reducer', () => {
         orderModalData: null,
         error: null
       },
-      createOrder.rejected(
-        new Error('Ошибка создания заказа'),
-        '',
-        ['bun-1', 'main-1']
-      )
+      createOrder.rejected(new Error('Ошибка создания заказа'), '', [
+        'bun-1',
+        'main-1'
+      ])
     );
 
     expect(state.orderRequest).toBe(false);
